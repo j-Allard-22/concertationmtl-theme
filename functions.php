@@ -10,6 +10,11 @@ function tt_child_enqueue_parent_styles()
 
 	wp_enqueue_style('parent-style', get_template_directory_uri() . '/style.css');
 	wp_enqueue_script('custom-js', get_stylesheet_directory_uri() . '/script.js', array());
+	// Localize the script with new data
+	$script_data_array = array(
+		'ajaxurl' => admin_url( 'admin-ajax.php' ),
+	);
+	wp_localize_script( 'custom-js', 'custom_js_data', $script_data_array );
 }
 
 add_theme_support('post-thumbnails');
@@ -944,6 +949,7 @@ add_action('wp_login', 'approve_entry');
 
 add_filter('gravityview-importer/strict-mode/fill-checkbox-choices', '__return_true');
 
+
 // Strip tags and remove or encode special characters from a string
 function sanitize_input( $input ) {
 	if ( is_array( $input ) ) {
@@ -955,3 +961,40 @@ function sanitize_input( $input ) {
     }
     return $input;
 }
+
+
+function delete_account() {
+	if ( is_user_logged_in() && isset( $_POST['confirm'] ) ) {
+		// only if role is subscriber 2
+		$user = wp_get_current_user();
+		if (
+			!empty( $user->roles ) &&
+			is_array( $user->roles ) &&
+			in_array( 'subscriber', $user->roles )
+		) {
+			$entry_id = get_user_meta( get_current_user_id(), 'form_entry_id', true );
+		
+			// delete entry
+			$no_gf = false;
+			if ( $entry_id ) {
+			$delete_gf = GFAPI::delete_entry( $entry_id );
+			if ( is_wp_error( $delete_gf ) ) {
+				$error_message = $delete_gf->get_error_message();
+			}
+			} else {
+				$no_gf = true;
+			}
+		
+			// delete user
+			$del_user = wp_delete_user( get_current_user_id() );
+		
+			if ( (! is_wp_error( $delete_gf ) || $no_gf ) && $del_user ) {
+				wp_send_json_success();
+			} else {
+				wp_send_json_error( array( 'error' => $error_message ) );
+			}
+		}
+	}
+}
+add_action('wp_ajax_delete_account', 'delete_account');
+add_action('wp_ajax_nopriv_delete_account', 'delete_account');
