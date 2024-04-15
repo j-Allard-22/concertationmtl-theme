@@ -30,7 +30,7 @@ function your_custom_sizes($sizes)
 // exclure catégorie parcours inspirants de la section nouvelles
 function exclude_category_home( $query ) {
 	if ( $query->is_home ) {
-	$query->set( 'cat', '-250', '-290' );
+	$query->set( 'cat', '-250,-290' );
 	}
 	return $query;
 }
@@ -94,7 +94,11 @@ function wpse47415_post_upload($fileinfo)
 
 function wpse47415_custom_upload_dir($path)
 {
-	$extension = substr(strrchr($_POST['name'], '.'), 1);
+	if ( isset( $_POST['name'] ) ) {
+		$extension = substr( strrchr( sanitize_input( $_POST['name'] ), '.' ), 1 );
+	} else {
+		$extension = '';
+	}
 	if (!empty($path['error']) ||  $extension != 'pdf') {
 		return $path;
 	} //error or other filetype; do nothing.
@@ -112,11 +116,13 @@ function wpse47415_custom_upload_dir($path)
  * Changer le logo et le style de la page login
  */
 function wpb_login_logo()
-{ ?>
+{ 
+	$upload_dir = wp_upload_dir();
+	?>
 	<style type="text/css">
 		#login h1 a,
 		.login h1 a {
-			background-image: url(https://concertationmtl.ca/wp-content/uploads/2019/11/LOGO-CMTL-120x90-1.png);
+			background-image: url('<?php echo $upload_dir['baseurl']; ?>/2019/11/LOGO-CMTL-120x90-1.png');
 			height: 90px;
 			width: 120px;
 			background-size: 120px 90px;
@@ -489,6 +495,7 @@ function dist_bulk_pdf_shortcode()
 	$view = $GLOBALS['gravityview_view'];
 	$entries = $view->getEntries();
 	$no_results = count($entries) == 0;
+	$upload_dir = wp_upload_dir();
 
 	$hash = "";
 
@@ -506,7 +513,7 @@ function dist_bulk_pdf_shortcode()
 		// Zip all the PDFs using ZipArchive
 		$zip = new ZipArchive();
 		$DelFilePath = "bulk_pdf.zip";
-		$filename = $_SERVER['DOCUMENT_ROOT'] . "/wp-content/uploads/temp_zip/" . $DelFilePath;
+		$filename = $upload_dir['basedir'] . "/temp_zip/" . $DelFilePath;
 
 		if (file_exists($filename)) {
 			unlink($filename);
@@ -592,7 +599,7 @@ function dist_bulk_pdf_shortcode()
 
 			$user_CSV[] = array(
 				$entry['date_created'],
-				'http://concertationmtl.ca/view/formulaire-de-candidature/entry/' . $entry['id'],
+				site_url( '/view/formulaire-de-candidature/entry/' . $entry['id'] ),
 				$entry['1'],
 				$entry['45'],
 				$entry['55'],
@@ -628,7 +635,7 @@ function dist_bulk_pdf_shortcode()
 		}
 
 		$DelFilePath = "resultats.csv";
-		$filename = $_SERVER['DOCUMENT_ROOT'] . "/wp-content/uploads/temp_zip/" . $DelFilePath;
+		$filename = $upload_dir['basedir'] . "/temp_zip/" . $DelFilePath;
 		if (file_exists($filename)) {
 			unlink($filename);
 		}
@@ -660,7 +667,7 @@ function dist_bulk_pdf_shortcode()
 		<!-- Télécharger le CSV -->
 		<script>
 			jQuery(document).ready(function($) {
-				$('a.button.dist_bulk_csv').attr('href', window.location.origin + '/wp-content/uploads/temp_zip/resultats.csv?<?php echo $hash ?>');
+				$('a.button.dist_bulk_csv').attr('href', window.location.origin + '<?php echo $upload_dir['basedir'] ?>/temp_zip/<?php echo $DelFilePath ?>?<?php echo $hash ?>');
 				$('a.button.dist_bulk_csv').text('Télécharger le fichier CSV');
 				// Remove get parameter on click
 				$('a.button.dist_bulk_csv').click(function(e) {
@@ -770,65 +777,65 @@ function pre_submission_handler($form)
 		$editentry = GFAPI::get_entry($entry_id);
 
 		// make changes to it from new values in $_POST, this shows only the first field update
-		$editentry['1'] = $_POST["input_1"]; // first name
-		$editentry['45'] = $_POST["input_45"]; // last name
-		$editentry['55'] = $_POST["input_55"]; // email
-		$editentry['56'] = $_POST["input_56"]; // phone
-		// $editentry['29'] = $_POST["input_29"]; // birth date
-		$editentry['91'] = $_POST["input_91"]; // birth year
-		$editentry['92'] = $_POST["input_92"]; // birth month
-		$editentry['93'] = $_POST["input_93"]; // birth day
-		$editentry['52'] = $_POST["input_52"]; // gender
-		$editentry['53'] = $_POST["input_53"]; // pronouns
-		$editentry['54'] = $_POST["input_54"]; // region
-		$editentry['57'] = $_POST["input_57"]; // postal
-		$editentry['58'] = $_POST["input_58"]; // city
+		$editentry['1']  = sanitize_input( $_POST["input_1"] ); // first name
+		$editentry['45'] = sanitize_input( $_POST["input_45"] ); // last name
+		$editentry['55'] = sanitize_input( $_POST["input_55"] ); // email
+		$editentry['56'] = sanitize_input( $_POST["input_56"] ); // phone
+	  //$editentry['29'] = sanitize_input( $_POST["input_29"] ); // birth date
+		$editentry['91'] = sanitize_input( $_POST["input_91"] ); // birth year
+		$editentry['92'] = sanitize_input( $_POST["input_92"] ); // birth month
+		$editentry['93'] = sanitize_input( $_POST["input_93"] ); // birth day
+		$editentry['52'] = sanitize_input( $_POST["input_52"] ); // gender
+		$editentry['53'] = sanitize_input( $_POST["input_53"] ); // pronouns
+		$editentry['54'] = sanitize_input( $_POST["input_54"] ); // region
+		$editentry['57'] = sanitize_input( $_POST["input_57"] ); // postal
+		$editentry['58'] = sanitize_input( $_POST["input_58"] ); // city
 
 		// groupe
-		$editentry['59.1'] = array_key_exists('input_59_1', $_POST) ? $_POST["input_59_1"] : '';
-		$editentry['59.2'] = array_key_exists('input_59_2', $_POST) ? $_POST["input_59_2"] : '';
-		$editentry['59.3'] = array_key_exists('input_59_3', $_POST) ? $_POST["input_59_3"] : '';
-		$editentry['59.4'] = array_key_exists('input_59_4', $_POST) ? $_POST["input_59_4"] : '';
-		$editentry['59.5'] = array_key_exists('input_59_5', $_POST) ? $_POST["input_59_5"] : '';
-		$editentry['59.6'] = array_key_exists('input_59_6', $_POST) ? $_POST["input_59_6"] : '';
+		$editentry['59.1'] = array_key_exists('input_59_1', $_POST) ? sanitize_input( $_POST["input_59_1"] ) : '';
+		$editentry['59.2'] = array_key_exists('input_59_2', $_POST) ? sanitize_input( $_POST["input_59_2"] ) : '';
+		$editentry['59.3'] = array_key_exists('input_59_3', $_POST) ? sanitize_input( $_POST["input_59_3"] ) : '';
+		$editentry['59.4'] = array_key_exists('input_59_4', $_POST) ? sanitize_input( $_POST["input_59_4"] ) : '';
+		$editentry['59.5'] = array_key_exists('input_59_5', $_POST) ? sanitize_input( $_POST["input_59_5"] ) : '';
+		$editentry['59.6'] = array_key_exists('input_59_6', $_POST) ? sanitize_input( $_POST["input_59_6"] ) : '';
 
-		$editentry['94'] = $_POST["input_94"]; // annee d'arrivee au Canada
+		$editentry['94']  = sanitize_input( $_POST["input_94"] ); // annee d'arrivee au Canada
 
-		$editentry['60'] = $_POST["input_60"]; // scolarite
+		$editentry['60']  = sanitize_input( $_POST["input_60"] ); // scolarite
 
-		$editentry['104'] = json_encode($_POST["input_104"]); // langues
+		$editentry['104'] = json_encode( sanitize_input( $_POST["input_104"] ) ); // langues
 
-		$editentry['62'] = $_POST["input_62"]; // experience
-		$editentry['64'] = $_POST["input_64"]; // membre d'un ordre?
+		$editentry['62']  = sanitize_input( $_POST["input_62"] ); // experience
+		$editentry['64']  = sanitize_input( $_POST["input_64"] ); // membre d'un ordre?
 
-		$editentry['99'] = json_encode($_POST["input_99"]); // ordres
+		$editentry['99']  = json_encode( sanitize_input( $_POST["input_99"] ) ); // ordres
 
-		$editentry['67'] = $_POST["input_67"]; // type d'organisation où travaille
+		$editentry['67']  = sanitize_input( $_POST["input_67"] ); // type d'organisation où travaille
 
-		$editentry['100'] = json_encode($_POST["input_100"]); // domaine d'expertise
+		$editentry['100'] = json_encode( sanitize_input( $_POST["input_100"] ) ); // domaine d'expertise
 
-		$editentry['101'] = json_encode($_POST["input_101"]); // secteur d'expérience significative
+		$editentry['101'] = json_encode( sanitize_input( $_POST["input_101"] ) ); // secteur d'expérience significative
 
-		$editentry['72'] = $_POST["input_72"]; // formations en gouvernance?
+		$editentry['72']  = sanitize_input( $_POST["input_72"] ); // formations en gouvernance?
 
 		// formations
-		$editentry['89.1'] = array_key_exists('input_89_1', $_POST) ? $_POST["input_89_1"] : '';
-		$editentry['89.2'] = array_key_exists('input_89_2', $_POST) ? $_POST["input_89_2"] : '';
-		$editentry['89.3'] = array_key_exists('input_89_3', $_POST) ? $_POST["input_89_3"] : '';
-		$editentry['89.4'] = array_key_exists('input_89_4', $_POST) ? $_POST["input_89_4"] : '';
-		$editentry['89.5'] = array_key_exists('input_89_5', $_POST) ? $_POST["input_89_5"] : '';
-		$editentry['89.6'] = array_key_exists('input_89_6', $_POST) ? $_POST["input_89_6"] : '';
-		$editentry['89.7'] = array_key_exists('input_89_7', $_POST) ? $_POST["input_89_7"] : '';
+		$editentry['89.1'] = array_key_exists('input_89_1', $_POST) ? sanitize_input( $_POST["input_89_1"] ) : '';
+		$editentry['89.2'] = array_key_exists('input_89_2', $_POST) ? sanitize_input( $_POST["input_89_2"] ) : '';
+		$editentry['89.3'] = array_key_exists('input_89_3', $_POST) ? sanitize_input( $_POST["input_89_3"] ) : '';
+		$editentry['89.4'] = array_key_exists('input_89_4', $_POST) ? sanitize_input( $_POST["input_89_4"] ) : '';
+		$editentry['89.5'] = array_key_exists('input_89_5', $_POST) ? sanitize_input( $_POST["input_89_5"] ) : '';
+		$editentry['89.6'] = array_key_exists('input_89_6', $_POST) ? sanitize_input( $_POST["input_89_6"] ) : '';
+		$editentry['89.7'] = array_key_exists('input_89_7', $_POST) ? sanitize_input( $_POST["input_89_7"] ) : '';
 
-		$editentry['75'] = $_POST["input_75"]; // experience en gouvernance
-		$editentry['76'] = $_POST["input_76"]; // annees d'experience
-		$editentry['78'] = $_POST["input_78"]; // siege presentement?
+		$editentry['75'] = sanitize_input( $_POST["input_75"] ); // experience en gouvernance
+		$editentry['76'] = sanitize_input( $_POST["input_76"] ); // annees d'experience
+		$editentry['78'] = sanitize_input( $_POST["input_78"] ); // siege presentement?
 
-		$editentry['98'] = json_encode($_POST["input_98"]); // domaine d'interets
+		$editentry['98'] = json_encode( sanitize_input( $_POST["input_98"] ) ); // domaine d'interets
 
-		$editentry['84'] = $_POST["input_84"]; // linkedin
-		$editentry['85'] = $target['url']; // resume
-		$editentry['26.1'] = array_key_exists('input_26_1', $_POST) ? $_POST["input_26_1"] : ''; // terms
+		$editentry['84']   = sanitize_input( $_POST["input_84"] ); // linkedin
+		$editentry['85']   = $target['url']; // resume
+		$editentry['26.1'] = array_key_exists('input_26_1', $_POST) ? sanitize_input( $_POST["input_26_1"] ) : ''; // terms
 
 		// update it
 		$updateit = GFAPI::update_entry($editentry);
@@ -837,18 +844,18 @@ function pre_submission_handler($form)
 			// update user data with new values
 			$userdata = array(
 				'ID' => get_current_user_id(),
-				'user_login' => $_POST["input_55"],
-				'user_email' => $_POST["input_55"],
-				'first_name' => $_POST["input_1"],
-				'last_name' => $_POST["input_45"],
+				'user_login' => sanitize_input( $_POST["input_55"] ),
+				'user_email' => sanitize_input( $_POST["input_55"] ),
+				'first_name' => sanitize_input( $_POST["input_1"] ),
+				'last_name'  => sanitize_input( $_POST["input_45"] ),
 			);
 			$user_id = wp_update_user($userdata);
 			if (!is_wp_error($user_id)) {
 				// success, so redirect
-				header("Location: http://concertationmtl.ca/compte/");
+				header( "Location: " . site_url("/compte/") );
 			} else {
 				// error, so redirect
-				header("Location: http://concertationmtl.ca/compte/");
+				header( "Location: " . site_url("/compte/") );
 			}
 		} else {
 			echo "Error.";
@@ -936,3 +943,15 @@ function approve_entry()
 add_action('wp_login', 'approve_entry');
 
 add_filter('gravityview-importer/strict-mode/fill-checkbox-choices', '__return_true');
+
+// Strip tags and remove or encode special characters from a string
+function sanitize_input( $input ) {
+	if ( is_array( $input ) ) {
+        foreach ( $input as $key => $value ) {
+            $input[$key] = sanitize_input( $value );
+        }
+    } else {
+        $input = filter_var( $input, FILTER_SANITIZE_STRING );
+    }
+    return $input;
+}
