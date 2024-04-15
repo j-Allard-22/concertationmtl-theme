@@ -13,8 +13,12 @@ if ( is_user_logged_in() && isset( $_POST['confirm'] ) ) {
     $entry_id = get_user_meta( get_current_user_id(), 'form_entry_id', true );
 
     // delete entry
+    $no_gf = false;
     if ( $entry_id ) {
       $delete_gf = GFAPI::delete_entry( $entry_id );
+      if ( is_wp_error( $delete_gf ) ) {
+        $error_message = $delete_gf->get_error_message();
+      }
     } else {
       $no_gf = true;
     }
@@ -23,14 +27,9 @@ if ( is_user_logged_in() && isset( $_POST['confirm'] ) ) {
     $del_user = wp_delete_user( get_current_user_id() );
 
     if ( (! is_wp_error( $delete_gf ) || $no_gf ) && $del_user ) {
-      echo json_encode( array(
-        'success' => true,
-      ) );
+      wp_send_json_success();
     } else {
-      echo json_encode( array(
-        'success' => false,
-        'error' => $delete_gf->get_error_message(),
-      ) );
+      wp_send_json_error( array( 'error' => $error_message ) );
     }
   }
 }
