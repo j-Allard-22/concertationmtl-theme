@@ -504,7 +504,7 @@ function dist_bulk_pdf_shortcode()
 
 	$hash = "";
 
-	if ($_GET['generate_pdfs'] == 1) {
+	if ( isset( $_GET['generate_pdfs'] ) && $_GET['generate_pdfs'] == 1) {
 		$entries_pdf = array();
 
 		// Generate a PDF for each entry
@@ -537,7 +537,7 @@ function dist_bulk_pdf_shortcode()
 		$hash = md5_file($filename);
 	}
 
-	if ($_GET['generate_csv'] == 1) {
+	if ( isset( $_GET['generate_csv'] ) && $_GET['generate_csv'] == 1 ) {
 		$user_CSV[0] = array(
 			'Date d\'inscription',
 			'Lien vers l\'inscription',
@@ -668,7 +668,7 @@ function dist_bulk_pdf_shortcode()
 		</a>
 	<?php endif; ?>
 
-	<?php if ($_GET['generate_csv'] == 1 && $generate_csv_success) : ?>
+	<?php if ( isset( $_GET['generate_csv'] ) &&  $_GET['generate_csv'] == 1 && $generate_csv_success ) : ?>
 		<!-- Télécharger le CSV -->
 		<script>
 			jQuery(document).ready(function($) {
@@ -704,7 +704,7 @@ function dist_bulk_pdf_shortcode()
 		</script>
 	<?php endif; ?>
 
-	<?php if ($_GET['generate_pdfs'] == 1 && $generate_success) : ?>
+	<?php if ( isset( $_GET['generate_pdfs'] ) && $_GET['generate_pdfs'] == 1 && $generate_success ) : ?>
 		<!-- Télécharger le PDF -->
 		<script>
 			jQuery(document).ready(function($) {
